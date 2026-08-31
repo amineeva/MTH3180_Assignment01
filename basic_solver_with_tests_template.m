@@ -50,12 +50,29 @@ end
 
 
 function x = bisection_solver(fun,x_left,x_right)
-    x = x_left+1; %this is just dummy code. replace this with your code
+    % find the middle x 
+    x_m = (x_right - x_left)/2
+    % evaluate the function at left, right, and middle x vals
+    f_x_m = fun(x_m)
+    f_x_L = fun(x_left)
+    f_x_R = fun(x_right)
+    % if statements -> determine direction of new bracket
+    if f_x_m = 0
+        %return root
+    elseif (f_x_L > 0 && f_x_m < 0) || (f_x_L < 0 && f_x_m > 0)
+        x_left = x_left
+        x_right = x_m
+    elseif (f_x_L > 0 && f_x_m < 0) || (f_x_L < 0 && f_x_m > 0)
+        
+    end
+
+
 end
 
 %Note that fun(x) should output [f,dfdx], where dfdx is the derivative of f
 function x = newton_solver(fun,x0)
     x = x0+1; %this is just dummy code. replace this with your code
+
 end
 
 function x = secant_solver(fun,x0, x1)
