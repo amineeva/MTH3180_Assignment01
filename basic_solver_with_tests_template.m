@@ -7,35 +7,38 @@ function basic_solver_with_tests_template()
     axis([-15,40,-50,80]);
     plot(xvals,yvals,'r','linewidth',2);
     plot(xvals,0*xvals,'k--','linewidth',1);
-    xlabel('x'); ylabel('y'); title('Test function 1');
+    xlabel('x'); ylabel('y'); title('Test Function 1');
 
-    % %Newton's method example test
-    % x0_guess = 2;
-    % plot(x0_guess,test_func01(x0_guess),'bo','markerfacecolor','b','markersize',5);
-    % 
-    % x_sol = newton_solver(@test_func01,x0_guess);
-    % plot(x_sol,test_func01(x_sol),'go','markerfacecolor','g','markersize',5);
+    ftol = 1e-14;
+    dxtol = 1e-14;
+    dxmax = 1e14
+
+     %Newton's method example test
+     x0_guess = 2;
+     plot(x0_guess,test_func01(x0_guess),'bo','markerfacecolor','b','markersize',5);
+     
+     x_sol = newton_solver(@test_func01,x0_guess, dxtol, ftol, dxmax);
+     plot(x_sol,test_func01(x_sol),'go','markerfacecolor','g','markersize',5);
     
 
-    % Secant method example test
-    x0_guess = -5;
-    x1_guess = 2;
-    plot(x0_guess,test_func01(x0_guess),'bo','markerfacecolor','b','markersize',5);
-    plot(x1_guess,test_func01(x1_guess),'ko','markerfacecolor','k','markersize',5);
-
-    x_sol = secant_solver(@test_func01,x0_guess,x1_guess);
-    plot(x_sol,test_func01(x_sol),'go','markerfacecolor','g','markersize',5);
+    %Secant method example test
+     %x0_guess = -5;
+     %x1_guess = 2;
+     %plot(x0_guess,test_func01(x0_guess),'bo','markerfacecolor','b','markersize',5);
+     %plot(x1_guess,test_func01(x1_guess),'ko','markerfacecolor','k','markersize',5);
+    % 
+     %x_sol = secant_solver(@test_func01,x0_guess,x1_guess);
+     %plot(x_sol,test_func01(x_sol),'go','markerfacecolor','g','markersize',5);
 
     
-    % % Bisection method example test
-    % x_left = -5;
-    % x_right = 2;
-    % plot(x_left,test_func01(x_left),'bo','markerfacecolor','b','markersize',5);
-    % plot(x_right,test_func01(x_right),'ko','markerfacecolor','k','markersize',5);
-    % 
-    % x_sol = bisection_solver(@test_func01,x_left,x_right);
-    % plot(x_sol,test_func01(x_sol),'go','markerfacecolor','g','markersize',5);
-
+    %Bisection method example test
+    %x_left = -5;
+    %x_right = 2;
+    %plot(x_left,test_func01(x_left),'bo','markerfacecolor','b','markersize',5);
+    %plot(x_right,test_func01(x_right),'ko','markerfacecolor','k','markersize',5);
+     
+    %x_sol = bisection_solver(@test_func01,x_left,x_right);
+    %plot(x_sol,test_func01(x_sol),'go','markerfacecolor','g','markersize',5);
 end
 
 
@@ -50,12 +53,6 @@ function [fval,dfdx] = test_func01(x)
 end
 
 
-% fun: the function we are computing the root of
-% x_left: left guess
-% x_right: right guess
-% note that f(x_left) and f(x_right) should have different signs
-%OUTPUTS
-% x: estimate for root of fun
 function x = bisection_solver(fun,x_left,x_right)
     f_x_m = 1; % initialize so while loop can start 
     while (f_x_m ~= 0)
@@ -80,25 +77,58 @@ function x = bisection_solver(fun,x_left,x_right)
 
 end
 
-
-
-%Note that fun(x) should output [f,dfdx], where dfdx is the derivative of f
-function x = newton_solver(fun,x0)
-    x = x0+1; %this is just dummy code. replace this with your code
-
-end
-
-
-%Root finding function via secant method
+%Root finding function via Newton's method
 %INPUTS:
 % fun: the function we are computing the root of
-% x0: first guess for secant method
-% x1: second guess for secant method
+% Note that fun(x) should output [f,dfdx], where dfdx is the derivative of f
+% (see test_func01 below for example)
+% x0: initial guess for Newton's method
+% dxtol: termination threshold (stop when interval abs(x_{i+1}-x_i) < dxtol)
+% ftol: termination threshold (stop when abs(f(x_{i}))<ftol
+% max_iter: maximum iteration limit
+% dxmax: threshold for checking for a divide by zero error:
+% terminate when abs(x_{i+1}-x_i) > dxmax, where dxmax is a very large number
 %OUTPUTS
 % x: estimate for root of fun
+% exit_flag: an integer indicating whether or not the solver succeeded
+function x = newton_solver(fun,x0,dxtol,ftol, dxmax)
+    [f, dfdx] = fun(x0);
+    %Initialize the code
+    while (abs(f) ~= 0)
+        [f, dfdx] = fun(x0);
+        if abs(f) < ftol
+            x = x0;
+            return
+        end
+        %Pulls the value of the function and its derivative at x = x0
+        if (abs(f) == 0)
+        %Checks if the function satisfies the ranged condition
+            x = x0;
+            return
+        else
+            if abs(dfdx) <= 1e-14
+                %Checks if the denominator will be too small
+                x = x0;
+                return
+            end
+            x1 = x0 - (f/dfdx);
+            if abs(x1 - x0) < dxtol | abs(x1-x0) > dxmax
+                x = x0;
+                return
+            else
+                x0 = x1;
+            end
+
+            
+
+            %Establishes new value for x0 for next iteration
+        end
+    end
+end
+
 function x = secant_solver(fun,x0, x1)
     f_x_n = 1; % initialize so while loop can start 
-    while (f_x_n ~= 0)
+    while (f_x_n ~= 0.0000001)
         % calculate the next estimate x
         x_n = x1 - fun(x1) * (x1 - x0) / (fun(x1) - fun(x0));
         
@@ -106,7 +136,7 @@ function x = secant_solver(fun,x0, x1)
         f_x_n = fun(x_n);
 
         % check if root
-        if f_x_n == 0
+        if abs(f_x_n) <= 0.0000001
             x = x_n;
             return
         end
