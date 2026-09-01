@@ -114,10 +114,6 @@ function x = secant_solver(fun,x0, x1)
         % if not, update x0 and x1 (guesses)
         x0 = x1;
         x1 = x_n;
-
-        disp(x0)
-        disp(x1)
-        disp(x_n)
     end
 end
 
