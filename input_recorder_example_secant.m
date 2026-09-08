@@ -95,34 +95,43 @@ fit_line_y = k*fit_line_x.^p;
 
 %log-log for raw error data
 fig1 = figure(1);
-loglog(e_list0,e_list1,'ro','markerfacecolor','r','markersize',1);
+h1 = loglog(e_list0,e_list1,'ro','markerfacecolor','r','markersize',1);
 axis([1e-18 1e5 1e-18 1e5])
 xlabel('$\epsilon_{n} (-)$', 'Interpreter', 'latex', 'FontSize', 14)
 ylabel('$\epsilon_{n+1} (-)$', 'Interpreter', 'latex', 'FontSize', 14)
 title('Raw Error Data: Secant Method'); % update based on solver
+legend(h1, 'All data', 'Location', 'northwest', 'FontSize', 10)
+subtitle(sprintf('Fit: e_{n+1} = %.4e e_n^{%.4f} | k = %.4e, p = %.4f', k, p, k, p), ...
+    'FontSize', 10);
 
 %log-log for filtered error data (overlayed on raw error data
 fig2 = figure(2);
-loglog(e_list0,e_list1,'ro','markerfacecolor','r','markersize',1);
+h1 = loglog(e_list0,e_list1,'ro','markerfacecolor','r','markersize',1);
 hold on;
-loglog(x_regression,y_regression,'b--<','markerfacecolor','r','markersize',1);
+h2 = loglog(x_regression,y_regression,'b.','markerfacecolor','r','markersize',1);
 axis([1e-18 1e5 1e-18 1e5])
 xlabel('$\epsilon_{n} (-)$', 'Interpreter', 'latex', 'FontSize', 14)
 ylabel('$\epsilon_{n+1} (-)$', 'Interpreter', 'latex', 'FontSize', 14)
 title('Filtered Error Data: Secant Method'); % update based on solver
+legend([h1 h2], {'All data', 'Filtered data'}, 'Location', 'northwest', 'FontSize', 10)
+subtitle(sprintf('Fit: e_{n+1} = %.4e e_n^{%.4f} | k = %.4e, p = %.4f', k, p, k, p), ...
+    'FontSize', 10);
 hold off;
 
 %log-log for error data with fit (overlayed on raw error data and filtered
 %data)
 fig3 = figure(3);
-loglog(e_list0,e_list1,'ro','markerfacecolor','r','markersize',1);
+h1 = loglog(e_list0,e_list1,'ro','markerfacecolor','r','markersize',1);
 hold on;
-loglog(x_regression,y_regression,'b--<','markerfacecolor','r','markersize',1);
-loglog(fit_line_x,fit_line_y,'k-','linewidth',2)
+h2 = loglog(x_regression,y_regression,'b.','markerfacecolor','r','markersize',1);
+h3 = loglog(fit_line_x,fit_line_y,'k-','linewidth',2)
 axis([1e-18 1e5 1e-18 1e5])
 xlabel('$\epsilon_{n} (-)$', 'Interpreter', 'latex', 'FontSize', 14)
 ylabel('$\epsilon_{n+1} (-)$', 'Interpreter', 'latex', 'FontSize', 14)
 title('Error Data with Fit: Secant Method'); % update based on solver
+legend([h1 h2 h3], {'All data', 'Filtered data', 'Fit'}, 'Location', 'northwest', 'FontSize', 10)
+subtitle(sprintf('Fit: e_{n+1} = %.4e e_n^{%.4f} | k = %.4e, p = %.4f', k, p, k, p), ...
+    'FontSize', 10);
 hold off;
 
 
