@@ -10,7 +10,7 @@ Authors: Cat Cirone, Alex Mineeva
 
 ## User Inputs
 
-Users can choose the solver 
+Users can choose the solver in `input_recorder_step_one.m` by setting the variable `method_flag`. 
 
 ## Outputs
 
