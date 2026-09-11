@@ -1,7 +1,10 @@
-function [x, discarded_list] = bisection_solver(fun,x_left,x_right, dxtol, ftol, max_iter)
+function [x, discarded_list, exit_flag] = bisection_solver(fun,x_left,x_right, dxtol, ftol, max_iter)
+    % exit_flag: success (1), fail (0) -> whether the function finishes
     discarded_list = [];
+
     % Default output
     x = (x_left + x_right) / 2;
+    exit_flag = 0;
 
     [fl, dfdx1] = fun(x_left);
     [fr, dfdx] = fun(x_right);
@@ -17,6 +20,7 @@ function [x, discarded_list] = bisection_solver(fun,x_left,x_right, dxtol, ftol,
             % if statements -> determine direction of new bracket
             if abs(f_x_m) < ftol %if x_m is root, return root
                 x = x_m;
+                exit_flag = 1;
                 return
             elseif (f_x_L > 0 && f_x_m < 0) || (f_x_L < 0 && f_x_m > 0)
                 discarded_list(end+1) = x_right;
@@ -29,6 +33,7 @@ function [x, discarded_list] = bisection_solver(fun,x_left,x_right, dxtol, ftol,
             % dxtol check
             if abs(x_right - x_left) < dxtol
                 x = (x_left + x_right)/2;
+                exit_flag = 1;
                 return
             end
         end
