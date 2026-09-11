@@ -30,7 +30,7 @@ f_record = my_recorder.generate_recorder_fun(@example_function);
 %so that each trial will converge to the same root
 %because the root is somewhere between -5 and 5.
 
-if method_flag == 1 % newton's
+if method_flag == 1 || method_flag == 4 % newton's, fzero
     x0_list = linspace(-5,5,num_iter); %used for newton's method
 end
 
@@ -83,6 +83,10 @@ for n = 1:num_iter
         % secant
         x_root = secant_solver(f_record, x0, x1, dxtol, ftol, num_iter, dxmax);
     end
+    if method_flag == 4
+        % secant
+        x_root = fzero(f_record, x0);
+    end
 
     %See what input values were used when f_record was called:
     input_list = my_recorder.get_input_list();
@@ -92,7 +96,7 @@ for n = 1:num_iter
     %In other words, it is now [x_1,x_2,...x_n-1,x_n]
     %append the collected data to the compilation
 
-    if method_flag == 1 || method_flag == 3 % newton, secant
+    if method_flag == 1 || method_flag == 3 || method_flag == 4 % newton, secant
         x_current_list = [x_current_list,input_list(1:end-1)];
         x_next_list = [x_next_list,input_list(2:end)];
         index_list = [index_list,1:length(input_list)-1];
