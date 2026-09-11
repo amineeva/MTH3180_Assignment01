@@ -31,7 +31,9 @@ f_record = my_recorder.generate_recorder_fun(@example_function);
 %because the root is somewhere between -5 and 5.
 
 if method_flag == 1 || method_flag == 4 % newton's, fzero
-    x0_list = linspace(-5,5,num_iter); %used for newton's method
+    % x0_list = linspace(-5,5,num_iter); %for example_function (09/09/2026)
+    % x0_list = linspace(27,47,num_iter); %for test_function02 (09/14/2026)
+    x0_list = linspace(0, 50, num_iter); % for test_function03 (09/14/2026)
 end
 
 if method_flag == 2 || method_flag == 3 % bisection, secant
@@ -50,12 +52,20 @@ x_next_list = [];
 %each data point was collected from
 index_list = [];
 
+% keep track of exit_flag for each guess
+x0_success_list = [];
+x1_success_list = [];
+x0_fail_list = [];
+x1_fail_list = [];
+
 % for bisection solver need to track most recently discarded values
 x_discarded_list = [];
 x_next_discarded_list = [];
 
 % calculate the "true root"
-x_true = fzero(@example_function, 0);
+% x_true = fzero(@example_function, 0);
+% x_true = fzero(@test_function02, 0);
+x_true = fzero(@test_function03, 0);
 
 
 %loop through each trial
@@ -73,7 +83,7 @@ for n = 1:num_iter
     
     if method_flag == 1
         % newton solver
-        x_root = newton_solver(f_record,x0, dxtol, ftol, num_iter, dxmax);
+        [x_root, exit_flag] = newton_solver(f_record,x0, dxtol, ftol, num_iter, dxmax);
     end
     if method_flag == 2
         % bisection solver
@@ -97,10 +107,23 @@ for n = 1:num_iter
     %append the collected data to the compilation
 
     if method_flag == 1 || method_flag == 3 || method_flag == 4 % newton, secant
+        % every guess tried
         x_current_list = [x_current_list,input_list(1:end-1)];
         x_next_list = [x_next_list,input_list(2:end)];
         index_list = [index_list,1:length(input_list)-1];
     end
+
+    if method_flag == 1 % newton
+        % classify points based on result exit_flag
+        if exit_flag == 1
+            x0_success_list = [x0_success_list, input_list(1:end-1)];
+            x1_success_list = [x1_success_list, input_list(2:end)];
+        else
+            x0_fail_list = [x0_fail_list, input_list(1:end-1)];
+            x1_fail_list = [x1_fail_list, input_list(2:end)];
+        end
+    end
+
 
     if method_flag == 2 % bisection
         x_discarded_list = [x_discarded_list, discarded_list(1:end-1)];
@@ -122,4 +145,26 @@ end
 function [fval,dfdx] = example_function(x)
     fval = (x.^3)/100 - (x.^2)/8 + 2*x + 6*sin(x/2+6) -.7 - exp(x/6);
     dfdx = 3*(x.^2)/100 - 2*x/8 + 2 +(6/2)*cos(x/2+6) - exp(x/6)/6;
+end
+
+
+%Quadratic function with root at the minimum -> 09/10 addition, test with
+%Newton's method
+function [f_val,dfdx] = test_function02(x)
+    global input_list;
+    input_list(:,end+1) = x;
+    f_val = (x-37.879).^2;
+    dfdx = 2*(x-37.879);
+end
+
+
+%Example sigmoid function -> 09/10 addition, use to make sigmoid plots
+function [f_val,dfdx] = test_function03(x)
+    a = 27.3; b = 2; c = 8.3; d = -3;
+    H = exp((x-a)/b);
+    dH = H/b;
+    L = 1+H;
+    dL = dH;
+    f_val = c*H./L+d;
+    dfdx = c*(L.*dH-H.*dL)./(L.^2);
 end
