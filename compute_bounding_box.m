@@ -1,21 +1,6 @@
 % Egg Step 1!
 
-% Wrapper function 2 (step 3)
-%set the oval hyper-parameters
-egg_params = struct();
-egg_params.a = 3; egg_params.b = 2; egg_params.c = .15;
-%specify the position and orientation of the egg
-x0 = 5; y0 = 5; theta = pi/6;
-%wrapper function that calls egg_wrapper1
-%but only takes s as an input (other inputs are fixed)
-%(single input)
-egg_wrapper2 = @(s) egg_wrapper1(s,x0,y0,theta,egg_params);
-
-
-%compute the value of s for which the corresponding point on the oval
-%has an x-coordinate of zero
-s_root = secant_solver(egg_wrapper2,0,.01);
-
+% egg_func for egg_func 
 
 
 %%%%%% Functions for bounding box and first wrapper function
@@ -30,8 +15,28 @@ s_root = secant_solver(egg_wrapper2,0,.01);
     %OUTPUTS:
     %x_range: the x limits of the bounding box in the form [x_min,x_max]
     %y_range: the y limits of the bounding box in the form [y_min,y_max]
-function [x_range,y_range] = compute_bounding_box(x0,y0,theta,egg_params)
-    %your code here
+function [x_range,y_range] = compute_bounding_box_func(x0,y0,theta,egg_params)
+   % Wrapper function 2 (step 3)
+    %set the oval hyper-parameters
+    egg_params = struct();
+    egg_params.a = 3; egg_params.b = 2; egg_params.c = .15;
+    %specify the position and orientation of the egg
+    x0 = 5; y0 = 5; theta = pi/6;
+    %wrapper function that calls egg_wrapper1
+    %but only takes s as an input (other inputs are fixed)
+    %(single input)
+    egg_wrapper2 = @(s) egg_wrapper1(s,x0,y0,theta,egg_params);
+    
+    
+    %compute the value of s for which the corresponding point on the oval
+    %has an x-coordinate of zero
+    ftol = 1e-14; % ftol: termination threshold (stop when abs(f(x_{i}))<ftol
+    dxtol = 1e-14; % dxtol: termination threshold (stop when interval abs(x_{i+1}-x_i) < dxtol)
+    dxmax = 1e14;
+    max_iter = 1000; % number of iterations per trial
+    num_iter = 1000; % number of trials we would like to perform
+    s_root = secant_solver(egg_wrapper2,0,.01, dxtol, ftol, max_iter, dxmax);
+
 
 end
 
