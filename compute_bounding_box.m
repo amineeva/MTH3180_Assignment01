@@ -1,11 +1,27 @@
-% Egg Step 1!
+% Egg Step 1! Plots egg with bounding box. Bounding box functions included
+% in file
 
-% egg_func for egg_func 
-
+egg_params = struct();
 egg_params.a = 3; egg_params.b = 2; egg_params.c = .15;
 %specify the position and orientation of the egg
 x0 = 5; y0 = 5; theta = pi/6;
-num_iter = 1000; % number of trials we would like to perform
+hold on; axis equal; axis square
+axis([0,10,0,10])
+%plot the origin of the egg frame
+plot(x0,y0,'ro','markerfacecolor','r');
+%compute the perimeter of the egg
+[V_list, G_list] = egg_func(linspace(0,1,100),x0,y0,theta,egg_params);
+%plot the perimeter of the egg
+plot(V_list(1,:),V_list(2,:),'k');
+%compute the bounding box
+[x_range, y_range] = compute_bounding_box_func(x0, y0, theta, egg_params);
+
+% bounding box coordinates from ranges
+x_box = [x_range(1),x_range(2),x_range(2),x_range(1),x_range(1)];
+y_box = [y_range(1),y_range(1),y_range(2),y_range(2),y_range(1)];
+
+% plot the bounding box
+plot(x_box,y_box,'c');
 
 
 %%%%%% Functions for bounding box and first wrapper function
@@ -21,9 +37,6 @@ num_iter = 1000; % number of trials we would like to perform
     %x_range: the x limits of the bounding box in the form [x_min,x_max]
     %y_range: the y limits of the bounding box in the form [y_min,y_max]
 function [x_range,y_range] = compute_bounding_box_func(x0,y0,theta,egg_params)
-   % Wrapper function 2 (step 3)
-    %set the oval hyper-parameters
-    egg_params = struct();
 
     % relevant tolerances
     ftol = 1e-14; % ftol: termination threshold (stop when abs(f(x_{i}))<ftol
