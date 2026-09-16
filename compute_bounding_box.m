@@ -35,7 +35,46 @@ function [x_range,y_range] = compute_bounding_box_func(x0,y0,theta,egg_params)
     dxmax = 1e14;
     max_iter = 1000; % number of iterations per trial
     num_iter = 1000; % number of trials we would like to perform
-    s_root = secant_solver(egg_wrapper2,0,.01, dxtol, ftol, max_iter, dxmax);
+
+    % need to find 4 roots using secant_solver -> between 0, 1/3, 2/3, 3/3
+    for n = 1:num_trials
+
+    % Pull out the initial guesses for this trial
+    x0 = X(n);
+    x1 = Y(n);
+
+    % Reset recorder
+    my_recorder.clear_input_list();
+
+    % Call Secant solver
+    x_root = secant_solver( ...
+        f_record, x0, x1, dxtol, ftol, max_iter, dxmax);
+
+    % Get recorded inputs
+    input_list = my_recorder.get_input_list();
+
+    % Need at least two recorded points to create e_n and e_(n+1)
+    if length(input_list) >= 2
+
+        x_current_list = ...
+            [x_current_list, input_list(1:end-1)];
+
+        x_next_list = ...
+            [x_next_list, input_list(2:end)];
+
+        index_list = ...
+            [index_list, 1:length(input_list)-1];
+
+    end
+    
+
+
+
+
+    s_root = secant_solver(egg_wrapper2,0,0.33, dxtol, ftol, num_iter, dxmax);
+
+
+
 
 
 end
@@ -48,4 +87,17 @@ end
 function x_out = egg_wrapper1(s,x0,y0,theta,egg_params)
     [V, G] = egg_func(s,x0,y0,theta,egg_params);
     x_out = V(1);
+end
+
+
+% return dx/ds to for bounding box
+function dxds_out = egg_dx_wrapper(s,x0,y0,theta,egg_params)
+    [V, G] = egg_func(s,x0,y0,theta,egg_params);
+    dxds_out = G(1);
+end
+
+% return dy/ds to for bounding box
+function dyds_out = egg_dy_wrapper(s,x0,y0,theta,egg_params)
+    [V, G] = egg_func(s,x0,y0,theta,egg_params);
+    dyds_out = G(2);
 end
