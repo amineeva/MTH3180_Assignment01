@@ -2,6 +2,11 @@
 
 % egg_func for egg_func 
 
+egg_params.a = 3; egg_params.b = 2; egg_params.c = .15;
+%specify the position and orientation of the egg
+x0 = 5; y0 = 5; theta = pi/6;
+num_iter = 1000; % number of trials we would like to perform
+
 
 %%%%%% Functions for bounding box and first wrapper function
 
@@ -19,63 +24,53 @@ function [x_range,y_range] = compute_bounding_box_func(x0,y0,theta,egg_params)
    % Wrapper function 2 (step 3)
     %set the oval hyper-parameters
     egg_params = struct();
-    egg_params.a = 3; egg_params.b = 2; egg_params.c = .15;
-    %specify the position and orientation of the egg
-    x0 = 5; y0 = 5; theta = pi/6;
-    %wrapper function that calls egg_wrapper1
-    %but only takes s as an input (other inputs are fixed)
-    %(single input)
-    egg_wrapper2 = @(s) egg_wrapper1(s,x0,y0,theta,egg_params);
-    
-    
-    %compute the value of s for which the corresponding point on the oval
-    %has an x-coordinate of zero
+
+    % relevant tolerances
     ftol = 1e-14; % ftol: termination threshold (stop when abs(f(x_{i}))<ftol
     dxtol = 1e-14; % dxtol: termination threshold (stop when interval abs(x_{i+1}-x_i) < dxtol)
     dxmax = 1e14;
     max_iter = 1000; % number of iterations per trial
-    num_iter = 1000; % number of trials we would like to perform
 
-    % need to find 4 roots using secant_solver -> between 0, 1/3, 2/3, 3/3
-    for n = 1:num_trials
+    % need dxds and dyds as a function of s ONLY (1input-1output)
+    dxds_wrapper = @(s) egg_dx_wrapper(s,x0,y0,theta,egg_params);
+    dyds_wrapper = @(s) egg_dy_wrapper(s,x0,y0,theta,egg_params);
 
-    % Pull out the initial guesses for this trial
-    x0 = X(n);
-    x1 = Y(n);
+    % Find roots for dx/ds and dy/ds. Know we have 4 points so splitting s
+    % into 4 sections: (0, 0.25, 0.5, 0.75, 1)
 
-    % Reset recorder
-    my_recorder.clear_input_list();
+    %%% s values where the solver finds dx/ds = 0
+    s_x1 = secant_solver(dxds_wrapper, 0, 0.25, dxtol, ftol, max_iter, dxmax);
+    s_x2 = secant_solver(dxds_wrapper, 0.25, 0.5, dxtol, ftol, max_iter, dxmax);
+    s_x3 = secant_solver(dxds_wrapper, 0.5, 0.75, dxtol, ftol, max_iter, dxmax);
+    s_x4 = secant_solver(dxds_wrapper, 0.75, 1, dxtol, ftol, max_iter, dxmax);
 
-    % Call Secant solver
-    x_root = secant_solver( ...
-        f_record, x0, x1, dxtol, ftol, max_iter, dxmax);
-
-    % Get recorded inputs
-    input_list = my_recorder.get_input_list();
-
-    % Need at least two recorded points to create e_n and e_(n+1)
-    if length(input_list) >= 2
-
-        x_current_list = ...
-            [x_current_list, input_list(1:end-1)];
-
-        x_next_list = ...
-            [x_next_list, input_list(2:end)];
-
-        index_list = ...
-            [index_list, 1:length(input_list)-1];
-
-    end
+    %%% s values where the solver finds dy/ds = 0
+    s_y1 = secant_solver(dyds_wrapper, 0, 0.25, dxtol, ftol, max_iter, dxmax);
+    s_y2 = secant_solver(dyds_wrapper, 0.25, 0.5, dxtol, ftol, max_iter, dxmax);
+    s_y3 = secant_solver(dyds_wrapper, 0.5, 0.75, dxtol, ftol, max_iter, dxmax);
+    s_y4 = secant_solver(dyds_wrapper, 0.75, 1, dxtol, ftol, max_iter, dxmax);
     
+    % now need to turn the 's' coordinate into x and y coordinates for
+    % bound box -> need the 'V' coordinate of x/y component
+    s_x = [s_x1, s_x2, s_x3, s_x4];
+    % passing 's' value vector for matrix of x(s), y(s) values -> care
+    % about top row (x-vals) of V_x
+    [V_x, G_x] = egg_func(s_x, x0, y0, theta, egg_params);
 
+    s_y = [s_y1, s_y2, s_y3, s_y4];
+    % passing 's' value vector for matrix of x(s), y(s) values -> care
+    % about bottom row (y-vals) of V_y
+    [V_y, G_y] = egg_func(s_y, x0, y0, theta, egg_params);
 
+    % now find the min and max x-vals (left and right edges)
+    x_min = min(V_x(1,:)); % left-most point
+    x_max = max(V_x(1,:)); % right-most point
+    x_range = [x_min, x_max];
 
-
-    s_root = secant_solver(egg_wrapper2,0,0.33, dxtol, ftol, num_iter, dxmax);
-
-
-
-
+    % now find the min and max y-vals (bottom and top edges)
+    y_min = min(V_y(2,:)); % bottom point
+    y_max = max(V_y(2,:)); % top point
+    y_range = [y_min, y_max];
 
 end
 
