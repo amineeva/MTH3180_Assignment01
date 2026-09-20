@@ -1,12 +1,17 @@
 clear;
 hold on
-x_root = fzero(@test_function03, 2)
+
+x_root = fzero(@test_function03, 2) %Finds true root of the fzero function
+
+%Set up plot
 xvals = linspace(x_root-50,x_root+50,1000);
 [yvals,~] = test_function03(xvals);
 axis([x_root-50,x_root+50,-10,10]);
 plot(xvals,yvals,'c-','linewidth',2);
 plot(xvals,0*xvals,'k--','linewidth',1);
 xlabel('x'); ylabel('y'); title('FZero Sigmoid Function');
+
+%Generate empty lists to find valid and invalid guesses
  x0_list = [xvals];
  x_correct = [];
  x_invalid = [];
@@ -20,6 +25,7 @@ xlabel('x'); ylabel('y'); title('FZero Sigmoid Function');
      end
  end
 
+%Plotting the guesses on the function
  h2 = plot(x_correct, test_function03(x_correct),'g.','markersize',5)
  h3 = plot(x_invalid, test_function03(x_invalid), 'r.','markersize',5)
  h1 = plot(x_root, test_function03(x_root), 'bo','markerfacecolor','b','markersize',5)
@@ -27,6 +33,8 @@ xlabel('x'); ylabel('y'); title('FZero Sigmoid Function');
  legend([h1 h2 h3], {'Root', 'Valid Data Point', 'Invalid Data Point'}, 'Location', 'northeast', 'FontSize', 10)
  hold off
 
+
+%Function for the sigmoid equation
 function [f_val,dfdx] = test_function03(x)
     a = 27.3; b = 2; c = 8.3; d = -3;
     H = exp((x-a)/b);
