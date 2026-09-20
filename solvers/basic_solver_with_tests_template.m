@@ -38,7 +38,7 @@ function basic_solver_with_tests_template()
     % plot(x_left,test_func01(x_left),'bo','markerfacecolor','b','markersize',5);
     % plot(x_right,test_func01(x_right),'ko','markerfacecolor','k','markersize',5);
     % 
-    % [x_sol, exit_flag] = bisection_solver(@test_func01,x_left,x_right, dxtol, ftol, max_iter);
+    % [x_sol, discarded, exit_flag] = bisection_solver(@test_func01,x_left,x_right, dxtol, ftol, max_iter);
     % plot(x_sol,test_func01(x_sol),'go','markerfacecolor','g','markersize',5);
 
 end
