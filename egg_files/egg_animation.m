@@ -23,37 +23,37 @@ function egganimation()
     %specify the position and orientation of the egg
     x0 = 5; y0 = 5;
 
-    %set up the axis
+    %create the plot
     hold on; axis equal; axis square
     axis([0,35,0,35])
     xlabel('X Value'); ylabel('Y Value')
     title('Egg Trajectory Animation')
 
-    xline(xg, 'k-')
-    yline(yw, 'k-')
+    xline(xg, 'k-') %Ground
+    yline(yw, 'k-') %Wall
 
     egg = plot(0,0, 'm')
 
     sr = linspace(0,1,400)
 
     for n = 1:length(tr)
-        if tr(n) >= tg
+        if tr(n) >= tg %if it hits the ground first
             disp('The egg has cracked!')
             return;
         end
-        if tr(n) >= tw
+        if tr(n) >= tw %if it hits the wall first
             disp('The egg has cracked!')
             return;
         end
 
         [x0, y0, theta] = trajectory(tr(n));
 
+        %Find V and G values in that instance
         [V,G] = egg_func(sr, x0, y0, theta, egg_params);
-        % plot(x0,y0,'ro','markerfacecolor','r', 'MarkerSize', 0.5);
+
+        %Create the visuals the frame
         set(egg, 'xdata', V(1,:), 'ydata', V(2,:));
-
         drawnow;
-
         frame = getframe(fig);
         writeVideo(writerObj,frame);
 
