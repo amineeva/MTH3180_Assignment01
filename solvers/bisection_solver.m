@@ -6,9 +6,7 @@ function [x, discarded_list, exit_flag] = bisection_solver(fun,x_left,x_right, d
     x = (x_left + x_right) / 2;
     exit_flag = 0;
 
-    % [fl, dfdx1] = fun(x_left);
     fl = fun(x_left);
-    % [fr, dfdx] = fun(x_right);
     fr = fun(x_right);
     % bisection safeguard - check that there is a 0 crossing
     if (fl < 0 && fr > 0) || (fl > 0 && fr < 0)
@@ -16,9 +14,6 @@ function [x, discarded_list, exit_flag] = bisection_solver(fun,x_left,x_right, d
             % find the middle x 
             x_m = (x_right + x_left)/2;
             % evaluate the function at left, right, and middle x vals
-            % [f_x_m, dfdxM] = fun(x_m);
-            % [f_x_L, dfdxL] = fun(x_left);
-            % [f_x_R, dfdxR] = fun(x_right);
             f_x_m = fun(x_m);
             f_x_L = fun(x_left);
             f_x_R = fun(x_right);
