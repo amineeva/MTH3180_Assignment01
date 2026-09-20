@@ -1,8 +1,7 @@
 function egganimation()
-    mypath1 = 'C:\Users\taylorott\Dropbox (Personal)\OrionTeachingMaterials\';
-    mypath2 = 'AppliedMathForEngineers\Modules\Strandbeest\graphics\';
+    mypath1 = 'C:\Users\ccirone\Downloads';
     fname='square_animation.avi';
-    input_fname = [mypath1,mypath2,fname];
+    input_fname = [mypath1, fname];
 
     %create a videowriter, which will write frames to the animation file
     writerObj = VideoWriter(input_fname);
@@ -16,7 +15,7 @@ function egganimation()
 
     trajectory = @egg_trajectory01;
 
-    xg = 68;
+    xg = 34;
     yw = 0;
 
     [tg, tw] = collision_func(trajectory, egg_params, yw, xg);
@@ -26,16 +25,16 @@ function egganimation()
 
     %set up the axis
     hold on; axis equal; axis square
-    axis([0,70,0,70])
+    axis([0,35,0,35])
     xlabel('X Value'); ylabel('Y Value')
     title('Egg Trajectory Animation')
 
-    xline(xwall, 'k-')
-    yline(yg, 'k-')
+    xline(xg, 'k-')
+    yline(yw, 'k-')
 
-    plot(0,0, 'r')
+    egg = plot(0,0, 'm')
 
-    sr = [0,1, 400]
+    sr = linspace(0,1,400)
 
     for n = 1:length(tr)
         if tr(n) >= tg
@@ -50,11 +49,13 @@ function egganimation()
         [x0, y0, theta] = trajectory(tr(n));
 
         [V,G] = egg_func(sr, x0, y0, theta, egg_params);
-        plot(x0,y0,'ro','markerfacecolor','r');
-        plot(V(1,:),V(2,:),'k');
+        % plot(x0,y0,'ro','markerfacecolor','r', 'MarkerSize', 0.5);
+        set(egg, 'xdata', V(1,:), 'ydata', V(2,:));
+
+        drawnow;
 
         frame = getframe(fig);
-        writeVideo(writerObj,current_frame);
+        writeVideo(writerObj,frame);
 
     end
     close(writerObj)
@@ -64,4 +65,257 @@ function [x0,y0,theta] = egg_trajectory01(t)
     x0 = 7*t + 8;
     y0 = -6*t.^2 + 20*t + 6;
     theta = 5*t;
+end
+
+function [t_ground,t_wall] = collision_func(traj_fun, egg_params, y_ground, x_wall)
+    % relevant tolerances
+    ftol = 1e-14; % ftol: termination threshold (stop when abs(f(x_{i}))<ftol
+    dxtol = 1e-14; % dxtol: termination threshold (stop when interval abs(x_{i+1}-x_i) < dxtol)
+    max_iter = 1000; % number of iterations per trial
+
+    % times (left and right for bisection)
+    t_left = 0;
+    t_right = 100;
+
+    % collision ground (y_ground)
+    f_ground = @(t) ground_func(t, traj_fun, egg_params, y_ground);
+    [t_ground, discarded_list, exit_flag] = bisection_solver(f_ground,t_left,t_right, dxtol, ftol, max_iter);
+
+    % collision wall (x_ground)
+    f_wall = @(t) wall_func(t, traj_fun, egg_params, x_wall);
+    [t_wall, discarded_list, exit_flag] = bisection_solver(f_wall,t_left,t_right, dxtol, ftol, max_iter);
+end
+
+function f_ground = ground_func(t, traj_fun, egg_params, y_ground)
+    [x0,y0,theta] = traj_fun(t);
+    [x_range, y_range] = compute_bounding_box(x0,y0,theta,egg_params);
+    f_ground = y_range(1) - y_ground;  % when f_ground > 0: egg above ground | f_ground < 0: egg below ground
+
+end
+
+function f_wall = wall_func(t, traj_fun, egg_params, x_wall)
+
+    [x0,y0,theta] = traj_fun(t);
+    [x_range, y_range] = compute_bounding_box(x0,y0,theta,egg_params);
+    f_wall = x_range(2) - x_wall; % when f_ground < 0: egg left of wall | when f_ground > 0: egg right of wall
+
+end
+
+
+%%% function from compute_bounding_box
+%wrapper function that calls egg_func
+%and only returns the x coordinate of the
+%point on the perimeter of the egg
+%(single output)
+function x_out = egg_wrapper1(s,x0,y0,theta,egg_params)
+    [V, G] = egg_func(s,x0,y0,theta,egg_params);
+    x_out = V(1);
+end
+
+
+% return dx/ds to for bounding box
+function dxds_out = egg_dx_wrapper(s,x0,y0,theta,egg_params)
+    [V, G] = egg_func(s,x0,y0,theta,egg_params);
+    dxds_out = G(1);
+end
+
+% return dy/ds to for bounding box
+function dyds_out = egg_dy_wrapper(s,x0,y0,theta,egg_params)
+    [V, G] = egg_func(s,x0,y0,theta,egg_params);
+    dyds_out = G(2);
+end
+
+function [x, discarded_list, exit_flag] = bisection_solver(fun,x_left,x_right, dxtol, ftol, max_iter)
+    % exit_flag: success (1), fail (0) -> whether the function finishes
+    discarded_list = [];
+
+    % Default output
+    x = (x_left + x_right) / 2;
+    exit_flag = 0;
+
+    % [fl, dfdx1] = fun(x_left);
+    fl = fun(x_left);
+    % [fr, dfdx] = fun(x_right);
+    fr = fun(x_right);
+    % bisection safeguard - check that there is a 0 crossing
+    if (fl < 0 && fr > 0) || (fl > 0 && fr < 0)
+        for i = 1:max_iter
+            % find the middle x 
+            x_m = (x_right + x_left)/2;
+            % evaluate the function at left, right, and middle x vals
+            % [f_x_m, dfdxM] = fun(x_m);
+            % [f_x_L, dfdxL] = fun(x_left);
+            % [f_x_R, dfdxR] = fun(x_right);
+            f_x_m = fun(x_m);
+            f_x_L = fun(x_left);
+            f_x_R = fun(x_right);
+            % if statements -> determine direction of new bracket
+            if abs(f_x_m) < ftol %if x_m is root, return root
+                x = x_m;
+                exit_flag = 1;
+                return
+            elseif (f_x_L > 0 && f_x_m < 0) || (f_x_L < 0 && f_x_m > 0)
+                discarded_list(end+1) = x_right;
+                x_right = x_m;
+            elseif (f_x_R > 0 && f_x_m < 0) || (f_x_R < 0 && f_x_m > 0)
+                discarded_list(end+1) = x_left;
+                x_left = x_m;
+            end
+
+            % dxtol check
+            if abs(x_right - x_left) < dxtol
+                x = (x_left + x_right)/2;
+                exit_flag = 1;
+                return
+            end
+        end
+
+        % final midpoint
+        x = (x_left + x_right) / 2;
+    end
+end
+
+function [x_range,y_range] = compute_bounding_box(x0,y0,theta,egg_params)
+
+    ftol = 1e-14; % ftol: termination threshold (stop when abs(f(x_{i}))<ftol
+    dxtol = 1e-14; % dxtol: termination threshold (stop when interval abs(x_{i+1}-x_i) < dxtol)
+    dxmax = 1e14;
+    max_iter = 100;
+    num_iter = max_iter;
+
+    %you'll need to change this
+    %you might even need multiple guesses
+    %so that you can catch top/bottom/left/right points of egg
+    %with multiple guesses, you will probably need a for loop!
+    s_guess = linspace(0, 0.5, 201) ;
+    s_guess2 = linspace(0.5, 1, 201);
+
+    xfunc = @(s) eggwrapperx(s,x0,y0,theta,egg_params);
+    yfunc = @(s) eggwrappery(s,x0,y0,theta,egg_params);
+
+    % Find x extrema
+    x_roots = [];
+
+    for n = 1:length(s_guess)
+        x_root = secant_solver(xfunc, s_guess(n), s_guess2(n), dxtol,ftol,max_iter,dxmax);
+        x_roots = [x_roots, x_root];
+    end
+
+    y_roots = [];
+
+    for n = 1:length(s_guess)
+        y_root = secant_solver(yfunc, s_guess(n), s_guess2(n), dxtol,ftol,max_iter,dxmax);
+        y_roots = [y_roots, y_root];
+    end
+
+    % Evaluate points at extrema
+    [Vx,~] = egg_func(x_roots,x0,y0,theta,egg_params);
+    [Vy,~] = egg_func(y_roots,x0,y0,theta,egg_params);
+
+    % Bounding box
+    x_range = [min(Vx(1,:)),max(Vx(1,:))];
+    y_range = [min(Vy(2,:)),max(Vy(2,:))];
+
+end
+
+
+% Returns x-component of gradient
+function xout = eggwrapperx(s, x0,y0,theta,egg_params)
+    [V,G] = egg_func(s, x0, y0, theta, egg_params);
+    xout = G(1);
+end
+
+function yout = eggwrappery(s, x0, y0, theta, egg_params)
+    [V,G] = egg_func(s, x0, y0, theta, egg_params);
+    yout = G(2);
+end
+
+
+% Egg function
+function [V, G] = egg_func(s,x0,y0,theta,egg_params)
+    %unpack the struct
+    a=egg_params.a;
+    b=egg_params.b;
+    c=egg_params.c;
+    
+    %compute x (without rotation or translation)
+    x = a*cos(2*pi*s);
+    
+    %useful intermediate variable
+    f = exp(-c*x/2);
+    
+    %compute y (without rotation or translation)
+    y = b*sin(2*pi*s).*f;
+    
+    %compute the derivatives of x and y (without rotation or translation)
+    dx = -2*pi*a*sin(2*pi*s);
+    df = (-c/2)*f.*dx;
+    dy = 2*pi*b*cos(2*pi*s).*f + b*sin(2*pi*s).*df;
+    
+    %rotation matrix corresponding to theta
+    R = [cos(theta),-sin(theta);sin(theta),cos(theta)];
+    
+    %compute position and gradient for rotated + translated oval
+    V = R*[x;y]+[x0*ones(1,length(theta));y0*ones(1,length(theta))];
+    G = R*[dx;dy];
+end
+
+
+% Secant solver
+function [x, exit_flag] = secant_solver(fun,x0,x1,dxtol,ftol,max_iter,dxmax)
+
+    exit_flag = 0;
+
+    f0 = fun(x0);
+    f1 = fun(x1);
+
+    for i = 1:max_iter
+
+        % Check denominator
+        if abs(f1 - f0) < eps * max([1, abs(f1), abs(f0)])
+            x = x1;
+            return
+        end
+
+        % Calculate next estimate
+        x_n = x1 - f1 * (x1 - x0) / (f1 - f0);
+
+        % Check for numerical failure
+        if ~isfinite(x_n)
+            x = x_n;
+            return
+        end
+
+        % Check maximum step
+        if abs(x_n - x1) > dxmax
+            x = x_n;
+            return
+        end
+
+        % Evaluate function
+        f_n = fun(x_n);
+
+        % Check function convergence
+        if abs(f_n) < ftol
+            x = x_n;
+            exit_flag = 1;
+            return
+        end
+
+        % Check x convergence
+        if abs(x_n - x1) < dxtol
+            x = x_n;
+            exit_flag = 1;
+            return
+        end
+
+        % Update
+        x0 = x1;
+        f0 = f1;
+
+        x1 = x_n;
+        f1 = f_n;
+    end
+
+    x = x_n;
 end
